@@ -252,7 +252,7 @@ function Sidebar({ active, onNav, showLogo }) {
   const items = [
     { id:'dashboard', label:'Dashboard', icon:<Icon.Grid/> },
     { id:'clients', label:'Clients', icon:<Icon.Users/> },
-    { id:'instatrace', label:'InstaTrace', icon:<Icon.Trace/> },
+    { id:'instatrace', label:'InstaTrace', icon:<Icon.Trace/>, pill:'Beta' },
     { id:'projects', label:'Projects', icon:<Icon.Folder/> },
     { id:'notifications', label:'Notifications', icon:<Icon.Bell/>, badge: 3 },
     { id:'reports', label:'Reports', icon:<Icon.Chart/> },
@@ -293,6 +293,11 @@ function Sidebar({ active, onNav, showLogo }) {
               {isActive && <div style={{position:'absolute', left:0, top:8, bottom:8, width:3, borderRadius:'0 3px 3px 0', background:'var(--accent)'}}/>}
               <span style={{display:'flex', color: isActive ? 'var(--accent-light, #a5b4fc)' : '#9ca3af'}}>{it.icon}</span>
               <span style={{flex:1}}>{it.label}</span>
+              {it.pill && <span style={{
+                background:'#0d9488', color:'#fff', fontSize:10, fontWeight:700,
+                padding:'2px 7px', borderRadius:99, letterSpacing:'0.06em', textTransform:'uppercase',
+                boxShadow:'0 0 0 1px rgba(255,255,255,0.08) inset',
+              }}>{it.pill}</span>}
               {it.badge && <span style={{
                 background:'var(--accent)', color:'#fff', fontSize:11, fontWeight:600,
                 padding:'2px 7px', borderRadius:10, minWidth:20, textAlign:'center'
@@ -659,11 +664,11 @@ function ActionCell({ status, client, onReauthorize, onView, initiallyAdded }) {
             zIndex:1100, display:'flex', alignItems:'center', justifyContent:'center', padding:24,
           }}>
             <div onClick={e=>e.stopPropagation()} style={{
-              background:'#fff', borderRadius:14, padding:'28px 28px 22px',
-              maxWidth:440, width:'100%',
+              background:'#fff', borderRadius:14, padding:'28px 30px 24px',
+              maxWidth:520, width:'100%',
               boxShadow:'0 20px 50px rgba(0,0,0,0.25)',
             }}>
-              <div style={{display:'flex', gap:14, alignItems:'flex-start'}}>
+              <div style={{display:'flex', gap:16, alignItems:'flex-start'}}>
                 <div style={{
                   flexShrink:0, width:40, height:40, borderRadius:'50%',
                   background:'#eef2ff', color:'#4f46e5',
@@ -676,10 +681,10 @@ function ActionCell({ status, client, onReauthorize, onView, initiallyAdded }) {
                   </svg>
                 </div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:16, fontWeight:700, color:'#111827', marginBottom:6}}>
+                  <div style={{fontSize:16, fontWeight:700, color:'#111827', marginBottom:8}}>
                     {match ? 'Confirmed Client Match' : 'No Matching Client Found'}
                   </div>
-                  <div style={{fontSize:13.5, color:'#374151', lineHeight:1.5}}>
+                  <div style={{fontSize:13.5, color:'#374151', lineHeight:1.55}}>
                     {match
                       ? <>We found <b>{match.name}</b> ({match.email}) in InstaChart Clients. Do you want to link this InstaTrace client to the existing InstaChart client, or create a new one?</>
                       : <>No matching client was found in InstaChart for <b>{client && client.name}</b> ({client && client.email}). Do you want to create a new InstaChart client?</>
@@ -687,51 +692,56 @@ function ActionCell({ status, client, onReauthorize, onView, initiallyAdded }) {
                   </div>
                   {match && (
                     <div style={{
-                      marginTop:12, padding:'10px 12px', background:'#f0fdf4',
+                      marginTop:14, padding:'12px 14px', background:'#f0fdf4',
                       border:'1px solid #86efac', borderRadius:8,
                       fontSize:13, color:'#111827',
                     }}>
                       <div style={{fontWeight:600}}>{match.name}</div>
-                      <div style={{color:'#6b7280', fontSize:12, marginTop:2}}>{match.email} · {match.project}</div>
+                      <div style={{color:'#6b7280', fontSize:12, marginTop:3}}>{match.email} Â· {match.project}</div>
                     </div>
                   )}
                 </div>
               </div>
-              <div style={{display:'flex', gap:10, justifyContent:'flex-end', marginTop:22}}>
-                <button onClick={()=>setConfirm(false)} style={{
-                  padding:'8px 18px', borderRadius:8, fontSize:13, fontWeight:600,
-                  background:'#fff', color:'#374151',
-                  border:'1px solid var(--border)', cursor:'pointer',
-                }}>Cancel</button>
+              <div style={{display:'flex', gap:10, alignItems:'center', marginTop:24, paddingTop:18, borderTop:'1px solid #f1f5f9'}}>
                 {match ? (
                   <>
+                    <button onClick={()=>{ setConfirm(false); setAdded(true);
+                      window.dispatchEvent(new CustomEvent('instatrace:client-linked', { detail: client }));
+                      if (match) {
+                        window.dispatchEvent(new CustomEvent('instachart:client-linked', { detail: match }));
+                        window.dispatchEvent(new CustomEvent('instachart:edit-client', { detail: match }));
+                      }
+                    }} style={{
+                      marginRight:'auto',
+                      padding:'8px 18px', borderRadius:8, fontSize:13, fontWeight:600,
+                      background:'var(--accent)', color:'#fff', border:'none', cursor:'pointer',
+                    }}>Link Client</button>
                     <button onClick={()=>{
                       setConfirm(false); setAdded(true);
-                      window.dispatchEvent(new CustomEvent('instachart:create-client', { detail: client }));
+                      window.dispatchEvent(new CustomEvent('instachart:create-client', { detail: { ...client, openEditAfterCreate: true } }));
                       window.dispatchEvent(new CustomEvent('instatrace:client-linked', { detail: client }));
                     }} style={{
                       padding:'8px 18px', borderRadius:8, fontSize:13, fontWeight:600,
                       background:'#fff', color:'var(--accent)',
                       border:'1px solid var(--accent)', cursor:'pointer',
                     }}>Create New</button>
-                    <button onClick={()=>{ setConfirm(false); setAdded(true);
-                      window.dispatchEvent(new CustomEvent('instatrace:client-linked', { detail: client }));
-                      if (match) window.dispatchEvent(new CustomEvent('instachart:client-linked', { detail: match }));
-                    }} style={{
-                      padding:'8px 18px', borderRadius:8, fontSize:13, fontWeight:600,
-                      background:'var(--accent)', color:'#fff', border:'none', cursor:'pointer',
-                    }}>Link Client</button>
                   </>
                 ) : (
                   <button onClick={()=>{
                     setConfirm(false); setAdded(true);
-                    window.dispatchEvent(new CustomEvent('instachart:create-client', { detail: client }));
+                    window.dispatchEvent(new CustomEvent('instachart:create-client', { detail: { ...client, openEditAfterCreate: true } }));
                     window.dispatchEvent(new CustomEvent('instatrace:client-linked', { detail: client }));
                   }} style={{
+                    marginRight:'auto',
                     padding:'8px 18px', borderRadius:8, fontSize:13, fontWeight:600,
                     background:'var(--accent)', color:'#fff', border:'none', cursor:'pointer',
                   }}>Create New Client</button>
                 )}
+                <button onClick={()=>setConfirm(false)} style={{
+                  padding:'8px 18px', borderRadius:8, fontSize:13, fontWeight:600,
+                  background:'#fff', color:'#374151',
+                  border:'1px solid var(--border)', cursor:'pointer',
+                }}>Cancel</button>
               </div>
             </div>
           </div>
@@ -781,7 +791,7 @@ function App() {
   const [icEditClient, setIcEditClient] = useState(null);
   const [extraICClients, setExtraICClients] = useState([]);
 
-  // Listen for "create new" events globally — works whether or not ClientsPage is mounted
+  // Listen for "create new" events globally â€” works whether or not ClientsPage is mounted
   useEffect(() => {
     const handler = (ev) => {
       const c = ev.detail || {};
@@ -798,6 +808,10 @@ function App() {
         linkedToInstaTrace: c.sourceInstaTraceId || c.linkedToInstaTrace || c.name || true,
       };
       setExtraICClients(list => [newRow, ...list]);
+      if (c.openEditAfterCreate) {
+        setIcEditClient(newRow);
+        setShowICCreate(true);
+      }
     };
     window.addEventListener('instachart:create-client', handler);
     const linkAdd = (ev) => {
@@ -915,7 +929,7 @@ function App() {
         <window.InstaChartCreateClientModal open={showICCreate} onClose={()=>{ setShowICCreate(false); setIcEditClient(null); }}
           prefill={icEditClient}
           onCreate={(form)=>{
-            if (icEditClient) return; // edit mode — don't create new
+            if (icEditClient) return; // edit mode â€” don't create new
             const fullName = `${form.firstName} ${form.lastName}`.trim() || 'New Client';
             window.dispatchEvent(new CustomEvent('instachart:create-client', {
               detail: { name: fullName, email: form.email, project: form.project || 'Mark Test Project', assignee: 'You' }
@@ -964,7 +978,7 @@ function App() {
                 display:'flex', alignItems:'center', gap:14, fontSize:13,
               }}>
                 <span style={{color:'var(--accent)', fontWeight:600}}>{selected.size} selected</span>
-                <span style={{color:'var(--text-muted)'}}>·</span>
+                <span style={{color:'var(--text-muted)'}}>Â·</span>
                 <button style={linkBtnStyle}>Resend invitations</button>
                 <button style={linkBtnStyle}>Export CSV</button>
                 <button style={linkBtnStyle}>Reassign</button>
@@ -1018,12 +1032,12 @@ function App() {
             }}>
               <span>Showing <b style={{color:'var(--text)'}}>{filtered.length}</b> of {CLIENTS.length} clients</span>
               <div style={{display:'flex', gap:6, alignItems:'center'}}>
-                <button style={pageBtn} disabled>‹</button>
+                <button style={pageBtn} disabled>â€¹</button>
                 <button style={{...pageBtn, background:'var(--accent)', color:'#fff', borderColor:'var(--accent)'}}>1</button>
                 <button style={pageBtn}>2</button>
                 <button style={pageBtn}>3</button>
-                <span style={{padding:'0 4px'}}>…</span>
-                <button style={pageBtn}>›</button>
+                <span style={{padding:'0 4px'}}>â€¦</span>
+                <button style={pageBtn}>â€º</button>
               </div>
             </div>
           </div>
